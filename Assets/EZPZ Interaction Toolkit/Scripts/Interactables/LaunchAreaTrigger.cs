@@ -1,4 +1,4 @@
-//EZPZ Interaction Toolkit
+﻿//EZPZ Interaction Toolkit
 //by Matt Cabanag
 //created 10 Mar 2024
 
@@ -13,7 +13,7 @@ public class LaunchAreaTrigger : InteractableTrigger
     public Transform launchPoint;
     public float forceFactor = 10;
 
-    public void OnTriggerEnter(Collider other)
+    public override void OnTriggerEnter(Collider other)
     {
         Rigidbody r = other.gameObject.GetComponent<Rigidbody>();
 
@@ -23,7 +23,7 @@ public class LaunchAreaTrigger : InteractableTrigger
                 subjectList.Add(r);
         }
 
-        onTriggerEnter.Invoke();
+        base.OnTriggerEnter(other);
     }
 
     public void Launch()
