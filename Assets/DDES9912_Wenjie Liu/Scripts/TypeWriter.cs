@@ -16,17 +16,17 @@ public class TypeWriter : MonoBehaviour
     public Transform PaperTf;
     public Vector3 paperStartPos, newLineUpDelta, overShowPos, overRotate;
 
-    //一共能写几行
+    //How many lines can be written in total?
     public int lineMax = 10;
     private int lineNow = 0;
     public bool lineOver = false;
 
-    //一行的能写的数量
+    //Number of characters that can be written in one line
     public int oneLineCount = 30;
     private int oneLineNow = 0;
 
     /// <summary>
-    /// 一行写完了吗
+    /// Is the line finished?
     /// </summary>
     public bool oneLineFull = false;
     public TextMeshPro paperText;
@@ -34,7 +34,7 @@ public class TypeWriter : MonoBehaviour
     public Transform writeRootTf, rollerTf;
     public Vector3 writeRootStartPos, newStrMoveDelta, rollerRotateDelta;
 
-    //正在动画状态？
+    //Is it currently in animation mode?
     public bool isRollerAni = false;
 
     private string clickStr = "";
@@ -53,6 +53,9 @@ public class TypeWriter : MonoBehaviour
     public GameObject paperPrefab;
     public Transform endPos;
 
+    public int paperUseCount = 0;
+    public TextMeshProUGUI useCountText;
+
     public bool CanWriteNow()
     {
         bool canWrite = !isRollerAni && !oneLineFull && !lineOver;
@@ -61,22 +64,22 @@ public class TypeWriter : MonoBehaviour
     }
 
     /// <summary>
-    /// 杆子打击
+    /// Pole strike
     /// </summary>
     public void PointDown(string info)
     {
-        //跟按键一样，需要打断，新的操作过来的话
+        //Just like pressing a button, it needs to be interrupted when a new operation comes in.
         writeLineTf.DOKill();
         clickStr = (isLarge || isLockLarge) ? info : info.ToLower();
         writeLineTf.DOLocalRotate(downRotate, 0.05f).OnComplete(TriggerPaper);
     }
 
     /// <summary>
-    /// 触碰到纸操作
+    /// Touching paper operation
     /// </summary>
     private void TriggerPaper()
     {
-        //写字
+        //Writing
         WriteStr();
 
         //单次大写，回杆
@@ -90,7 +93,7 @@ public class TypeWriter : MonoBehaviour
     }
 
     /// <summary>
-    /// 写字操作，同时滚筒运行
+    /// Writing operation while the rollers run
     /// </summary>
     private void WriteStr()
     {
@@ -108,7 +111,7 @@ public class TypeWriter : MonoBehaviour
     }
 
     /// <summary>
-    /// 完成一行
+    /// Complete a line
     /// </summary>
     private void OverOneLine()
     {
@@ -131,7 +134,7 @@ public class TypeWriter : MonoBehaviour
 
     private bool isInpapering = false;
     /// <summary>
-    /// 进纸
+    /// Paper feed
     /// </summary>
     public void InPaper()
     {
@@ -139,6 +142,10 @@ public class TypeWriter : MonoBehaviour
             return;
         isInpapering = true;
         ResetTypewriter();
+
+        paperUseCount++;
+        useCountText.text = paperUseCount.ToString();
+
         newPaperTf.localPosition = newPaperPosStart.localPosition;
         newPaperTf.localEulerAngles = newPaperPosStart.localEulerAngles;
         newPaperTf.gameObject.SetActive(true);
@@ -155,7 +162,7 @@ public class TypeWriter : MonoBehaviour
     }
 
     /// <summary>
-    /// 打印完毕，出纸
+    ///Printing complete, paper output
     /// </summary>
     public void OutPaper()
     {
@@ -167,7 +174,7 @@ public class TypeWriter : MonoBehaviour
     }
 
     /// <summary>
-    /// 重置打字机
+    /// Reset typewriter status
     /// </summary>
     public void ResetTypewriter()
     {
@@ -191,7 +198,7 @@ public class TypeWriter : MonoBehaviour
     }
 
     /// <summary>
-    /// 退出
+    /// quit
     /// </summary>
     private void QuitGame()
     {
@@ -202,18 +209,18 @@ public class TypeWriter : MonoBehaviour
     private float willRunTime = 0;
 
     /// <summary>
-    /// 换一行新的内容
+    /// New line content
     /// </summary>
     public void RunNewLine()
     {
-        //判断纸用完没，是否能继续换行
+        //To determine if the paper is used up and whether a new line can be started, check if the paper has run out.
         if (lineOver)
             return;
 
-        //进入换行动画，防止别的按钮按下触发
+        //Enter the transition animation to prevent other button presses from triggering it.
         isRollerAni = true;
 
-        //判断是否写完了一行，没写完直接换行的话，计数换行
+        //Check if a line has been written completely. If a newline is started before the line is finished, count the newline characters.
         if (!oneLineFull)
         {
             OverOneLine();
@@ -221,31 +228,31 @@ public class TypeWriter : MonoBehaviour
 
         musicNow.PlayReturn();
 
-        //滚筒下滚
+        //Roller downwards
         rollerTf.DOLocalRotate(rollerRotateDelta, 0.1f);
 
-        //计算写字移动距离，然后计算回到起点时间，为了保持移动速度合理性
+        //Calculate the distance traveled while writing, and then calculate the time to return to the starting point, in order to maintain a reasonable movement speed.
         willRunTime = (writeRootStartPos.x - writeRootTf.localPosition.x) / 2f;
 
-        //给滚筒的动画预留时间，防止没动画直接换行
+        //Allow time for the scrolling animation to prevent line breaks due to lack of animation.
         if (willRunTime < 0.1f)
             willRunTime = 0.1f;
 
         gearTf.DOLocalRotate(Vector3.zero, willRunTime);
-        //滚筒移动到起点
+        //The roller moves to the starting point
         writeRootTf.DOLocalMove(writeRootStartPos, willRunTime).OnComplete(() =>
         {
-            //滚筒转动回去
+            //The roller rotates back
             rollerTf.DOLocalRotate(Vector3.zero, 0.1f);
 
-            //纸张跟随向上移动
+            //The paper followed and moved upwards.
             PaperTf.DOLocalMove(PaperTf.localPosition + newLineUpDelta, 0.1f).OnComplete(() =>
             {
                 oneLineFull = false;
                 oneLineNow = 0;
                 isRollerAni = false;
 
-                //移动结束，text换行
+                //The move ended, and the text wrapped to a newline.
                 writeNowInfo += "\n";
                 //Debug.Log("???");
             });
@@ -253,7 +260,7 @@ public class TypeWriter : MonoBehaviour
     }
 
     /// <summary>
-    /// 杆子抬起
+    /// Raise the pole
     /// </summary>
     public void PointUp()
     {
@@ -267,7 +274,7 @@ public class TypeWriter : MonoBehaviour
     }
 
     /// <summary>
-    /// 大写抬杆
+    /// Capital bar Lift
     /// </summary>
     public void PointMoveUp(bool isLock = false)
     {
@@ -280,7 +287,7 @@ public class TypeWriter : MonoBehaviour
     }
 
     /// <summary>
-    /// 大写下杆
+    /// Down the capital bar
     /// </summary>
     public void PointMoveDown()
     {

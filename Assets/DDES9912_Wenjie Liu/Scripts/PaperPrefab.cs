@@ -17,8 +17,9 @@ public class PaperPrefab : MonoBehaviour
             transform.DORotate(outPos.eulerAngles, 0.3f);
             transform.DOMove(outPos.position, 0.5f).OnComplete(() =>
             {
-                transform.DOLocalMove(overTf.position, Vector3.Distance(overTf.position, transform.position) / speed).OnComplete(() =>
+                transform.DOLocalMove(overTf.position, Vector3.Distance(overTf.position, transform.position) / speed).SetEase(Ease.Linear).OnComplete(() =>
                 {
+                    MusicControl.instance.GetPaper(info);
                     Destroy(gameObject);
                 });
             });
